@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sexta Especial - França Odontologia</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center p-4">
 
@@ -13,7 +14,7 @@
         <p class="text-slate-500 mb-6 font-medium">Sexta: Você conhece a França? ✨</p>
         <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
         <input type="tel" id="whatsapp" placeholder="WhatsApp" class="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
-        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Descobrir e Ganhar Pontos</button>
+        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-800 transition">Descobrir e Ganhar Pontos</button>
     </div>
 
     <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md">
@@ -24,13 +25,12 @@
 
         <div id="pergunta-container" class="text-center">
             <h2 id="texto-pergunta" class="text-xl font-bold text-slate-800 mb-8 leading-tight"></h2>
-            <div id="opcoes" class="grid grid-cols-1 gap-4">
-                </div>
+            <div id="opcoes" class="grid grid-cols-1 gap-4"></div>
         </div>
 
         <div id="mensagem" class="hidden mt-8 border-t pt-4 text-center">
             <p id="texto-final" class="font-bold text-lg mb-4 text-green-600"></p>
-            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
+            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md hover:bg-blue-800"></button>
         </div>
     </div>
 
@@ -43,7 +43,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-       const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyCzwQJ1k25R6eSmroZ7mtTbzbMYvJWyHNU",
   authDomain: "franca-odontologia-3.firebaseapp.com",
   projectId: "franca-odontologia-3",
@@ -58,18 +58,21 @@
         const perguntas = [
             { 
                 q: "Além de cuidar do seu sorriso, você sabia que a França Odontologia também realiza aplicação de BOTOX?", 
-                options: ["Sim, quero saber mais!", "Não sabia, que legal!"],
-                a: 0 // Qualquer uma pontua porque é informativo
+                options: ["Sim, agora eu sei!", "Não sabia!"],
+                a: 0,
+                explicacao: "Sim! Cuidamos da sua estética facial completa com Botox."
             },
             { 
                 q: "Na França Odontologia você pode parcelar seu tratamento sem cartão de crédito através do nosso:", 
-                options: ["Carnê Digital Próprio", "Pagamento à vista apenas"],
-                a: 0
+                options: ["Carnê Digital Próprio", "Apenas Cartão"],
+                a: 0,
+                explicacao: "Exato! Nosso Carnê Digital facilita seu tratamento sem burocracia."
             },
             { 
                 q: "Qual a tecnologia moderna de alinhadores invisíveis que nossa ortodontista utiliza na clínica?", 
-                options: ["Aparelho de Metal", "Invisalign (Técnica inovadora)"],
-                a: 1
+                options: ["Aparelho de Ferro", "Invisalign"],
+                a: 1,
+                explicacao: "Isso mesmo! O Invisalign é o alinhador mais moderno e discreto do mundo."
             }
         ];
 
@@ -107,12 +110,28 @@
             });
         }
 
-        function responder(idx) {
-            if(idx === perguntas[qAtual].a) {
+        async function responder(idx) {
+            const correta = perguntas[qAtual].a;
+            
+            if(idx === correta) {
                 pontosGanhos += 10;
-            } else if (qAtual === 0) { 
-                pontosGanhos += 10; // Pergunta 1 qualquer resposta ganha
+                await Swal.fire({
+                    title: 'Correto!',
+                    text: perguntas[qAtual].explicacao,
+                    icon: 'success',
+                    confirmButtonText: 'Continuar',
+                    confirmButtonColor: '#1e3a8a'
+                });
+            } else {
+                await Swal.fire({
+                    title: 'Ops!',
+                    text: `A resposta correta era: ${perguntas[qAtual].options[correta]}. ${perguntas[qAtual].explicacao}`,
+                    icon: 'info',
+                    confirmButtonText: 'Entendi',
+                    confirmButtonColor: '#1e3a8a'
+                });
             }
+            
             qAtual++;
             carregarQuestao();
         }
@@ -121,7 +140,7 @@
             document.getElementById('pergunta-container').classList.add('hidden');
             const msg = document.getElementById('mensagem');
             msg.classList.remove('hidden');
-            document.getElementById('texto-final').innerText = `Parabéns! Você ganhou ${pontosGanhos} pontos acumulativos!`;
+            document.getElementById('texto-final').innerText = `Fim do Desafio! Você garantiu ${pontosGanhos} pontos hoje.`;
             document.getElementById('btn-acao').innerText = "REGISTRAR NO MEU RANKING";
             document.getElementById('btn-acao').onclick = () => salvarNoFirebase(pontosGanhos);
         }
@@ -132,12 +151,16 @@
             const hoje = new Date().toLocaleDateString();
             const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
             const snap = await getDocs(q);
-            if(!snap.empty) { alert("Você já garantiu seus pontos de hoje!"); location.reload(); return; }
+            if(!snap.empty) { 
+                Swal.fire('Aviso', 'Você já jogou hoje!', 'warning');
+                location.reload(); 
+                return; 
+            }
 
             await addDoc(collection(db, "pontos"), {
                 nome: nomePac, whatsapp: zapPac, pontos: pts, jogo: "Sexta-QuizClinica", data: new Date(), dataSimples: hoje
             });
-            alert("Sextou com pontos na conta!");
+            await Swal.fire('Sucesso!', 'Seus pontos foram somados ao ranking!', 'success');
             location.reload();
         }
 
