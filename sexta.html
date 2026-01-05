@@ -14,29 +14,29 @@
         <p class="text-slate-500 mb-6 font-medium">Sexta: Você conhece a França? ✨</p>
         <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
         <input type="tel" id="whatsapp" placeholder="WhatsApp" class="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
-        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-800 transition">Descobrir e Ganhar Pontos</button>
+        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Entrar no Desafio</button>
     </div>
 
     <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md">
         <div class="flex justify-between items-center mb-6">
-            <span class="text-blue-900 font-bold uppercase text-xs">Desafio de Sexta</span>
-            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">Questão <span id="num-questao">1</span>/3</span>
+            <span class="text-blue-900 font-bold uppercase text-[10px]">Especial de Sexta</span>
+            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">Questão <span id="num-questao">1</span>/3</span>
         </div>
 
-        <div id="pergunta-container" class="text-center">
-            <h2 id="texto-pergunta" class="text-xl font-bold text-slate-800 mb-8 leading-tight"></h2>
-            <div id="opcoes" class="grid grid-cols-1 gap-4"></div>
+        <div id="pergunta-container">
+            <h2 id="texto-pergunta" class="text-lg font-bold text-slate-800 mb-6 text-center"></h2>
+            <div id="opcoes" class="grid grid-cols-1 gap-3"></div>
         </div>
 
         <div id="mensagem" class="hidden mt-8 border-t pt-4 text-center">
             <p id="texto-final" class="font-bold text-lg mb-4 text-green-600"></p>
-            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md hover:bg-blue-800"></button>
+            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
         </div>
     </div>
 
     <div id="ranking-container" class="hidden mt-6 bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-900">
-        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 uppercase tracking-tighter italic">🏆 Top Sorrisos França</h3>
-        <div id="lista-ranking" class="text-sm space-y-2"></div>
+        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 uppercase text-sm">🏆 Top Sorrisos França</h3>
+        <div id="lista-ranking" class="space-y-2"></div>
     </div>
 
     <script type="module">
@@ -58,126 +58,106 @@
         const perguntas = [
             { 
                 q: "Além de cuidar do seu sorriso, você sabia que a França Odontologia também realiza aplicação de BOTOX?", 
-                options: ["Sim, agora eu sei!", "Não sabia!"],
-                a: 0,
-                explicacao: "Sim! Cuidamos da sua estética facial completa com Botox."
+                opts: ["Sim, agora eu sei!", "Não sabia!"],
+                c: 0,
+                msg: "Cuidamos da sua estética facial completa com Botox!"
             },
             { 
-                q: "Na França Odontologia você pode parcelar seu tratamento sem cartão de crédito através do nosso:", 
-                options: ["Carnê Digital Próprio", "Apenas Cartão"],
-                a: 0,
-                explicacao: "Exato! Nosso Carnê Digital facilita seu tratamento sem burocracia."
+                q: "Na França Odontologia você pode parcelar seu tratamento sem cartão através do nosso:", 
+                opts: ["Carnê Digital Próprio", "Apenas à vista"],
+                c: 0,
+                msg: "Nosso Carnê Digital facilita seu tratamento sem burocracia!"
             },
             { 
-                q: "Qual a tecnologia moderna de alinhadores invisíveis que nossa ortodontista utiliza na clínica?", 
-                options: ["Aparelho de Ferro", "Invisalign"],
-                a: 1,
-                explicacao: "Isso mesmo! O Invisalign é o alinhador mais moderno e discreto do mundo."
+                q: "Qual tecnologia de alinhadores invisíveis nossa ortodontista utiliza na clínica?", 
+                opts: ["Aparelho Comum", "Invisalign"],
+                c: 1,
+                msg: "O Invisalign é o alinhador mais moderno e discreto do mundo!"
             }
         ];
 
         let qAtual = 0;
-        let pontosGanhos = 0;
+        let pontos = 0;
         let nomePac = "";
         let zapPac = "";
 
         window.iniciar = function() {
             nomePac = document.getElementById('nome').value.trim();
             zapPac = document.getElementById('whatsapp').value.trim();
-            if(!nomePac || !zapPac) return alert("Preencha nome e WhatsApp!");
+            if(!nomePac || !zapPac) return alert("Preencha tudo!");
+            
             document.getElementById('tela-login').classList.add('hidden');
             document.getElementById('tela-jogo').classList.remove('hidden');
             document.getElementById('ranking-container').classList.remove('hidden');
-            carregarQuestao();
+            
             atualizarRankingVisual();
+            renderizar();
         }
 
-        function carregarQuestao() {
+        function renderizar() {
             if(qAtual >= perguntas.length) return finalizar();
             
             document.getElementById('num-questao').innerText = qAtual + 1;
             document.getElementById('texto-pergunta').innerText = perguntas[qAtual].q;
             
-            const areaOpcoes = document.getElementById('opcoes');
-            areaOpcoes.innerHTML = "";
+            const box = document.getElementById('opcoes');
+            box.innerHTML = "";
             
-            perguntas[qAtual].options.forEach((opt, index) => {
-                const btn = document.createElement('button');
-                btn.className = "bg-blue-50 text-blue-900 py-4 px-4 rounded-2xl font-bold border-2 border-blue-100 hover:bg-blue-100 transition text-left";
-                btn.innerText = opt;
-                btn.onclick = () => responder(index);
-                areaOpcoes.appendChild(btn);
+            perguntas[qAtual].opts.forEach((txt, i) => {
+                const b = document.createElement('button');
+                b.className = "w-full bg-slate-50 text-blue-900 p-4 rounded-xl font-bold border-2 border-slate-200 text-left hover:border-blue-900 transition";
+                b.innerText = txt;
+                b.onclick = () => checar(i);
+                box.appendChild(b);
             });
         }
 
-        async function responder(idx) {
-            const correta = perguntas[qAtual].a;
-            
-            if(idx === correta) {
-                pontosGanhos += 10;
-                await Swal.fire({
-                    title: 'Correto!',
-                    text: perguntas[qAtual].explicacao,
-                    icon: 'success',
-                    confirmButtonText: 'Continuar',
-                    confirmButtonColor: '#1e3a8a'
-                });
+        async function checar(i) {
+            const correta = perguntas[qAtual].c;
+            if(i === correta) {
+                pontos += 10;
+                await Swal.fire({ icon: 'success', title: 'Correto!', text: perguntas[qAtual].msg, confirmButtonColor: '#1e3a8a' });
             } else {
-                await Swal.fire({
-                    title: 'Ops!',
-                    text: `A resposta correta era: ${perguntas[qAtual].options[correta]}. ${perguntas[qAtual].explicacao}`,
-                    icon: 'info',
-                    confirmButtonText: 'Entendi',
-                    confirmButtonColor: '#1e3a8a'
-                });
+                await Swal.fire({ icon: 'error', title: 'Quase lá...', text: "A resposta certa era: " + perguntas[qAtual].opts[correta] + ". " + perguntas[qAtual].msg, confirmButtonColor: '#1e3a8a' });
             }
-            
             qAtual++;
-            carregarQuestao();
+            renderizar();
         }
 
         function finalizar() {
             document.getElementById('pergunta-container').classList.add('hidden');
-            const msg = document.getElementById('mensagem');
-            msg.classList.remove('hidden');
-            document.getElementById('texto-final').innerText = `Fim do Desafio! Você garantiu ${pontosGanhos} pontos hoje.`;
-            document.getElementById('btn-acao').innerText = "REGISTRAR NO MEU RANKING";
-            document.getElementById('btn-acao').onclick = () => salvarNoFirebase(pontosGanhos);
+            document.getElementById('mensagem').classList.remove('hidden');
+            document.getElementById('texto-final').innerText = `Você ganhou ${pontos} pontos!`;
+            document.getElementById('btn-acao').innerText = "SALVAR NO RANKING";
+            document.getElementById('btn-acao').onclick = () => salvar();
         }
 
-        async function salvarNoFirebase(pts) {
-            const btn = document.getElementById('btn-acao');
-            btn.disabled = true;
+        async function salvar() {
             const hoje = new Date().toLocaleDateString();
             const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
             const snap = await getDocs(q);
-            if(!snap.empty) { 
-                Swal.fire('Aviso', 'Você já jogou hoje!', 'warning');
-                location.reload(); 
-                return; 
-            }
+            if(!snap.empty) { alert("Você já pontuou hoje!"); location.reload(); return; }
 
             await addDoc(collection(db, "pontos"), {
-                nome: nomePac, whatsapp: zapPac, pontos: pts, jogo: "Sexta-QuizClinica", data: new Date(), dataSimples: hoje
+                nome: nomePac, whatsapp: zapPac, pontos: pontos, jogo: "Sexta-Quiz", data: new Date(), dataSimples: hoje
             });
-            await Swal.fire('Sucesso!', 'Seus pontos foram somados ao ranking!', 'success');
+            alert("Pontos salvos!");
             location.reload();
         }
 
         async function atualizarRankingVisual() {
-            const q = query(collection(db, "pontos"));
-            const querySnapshot = await getDocs(q);
+            const snap = await getDocs(collection(db, "pontos"));
             const totais = {};
-            querySnapshot.forEach(doc => {
-                const d = doc.data();
-                if (!totais[d.whatsapp]) totais[d.whatsapp] = { nome: d.nome, pts: 0 };
-                totais[d.whatsapp].pts += d.pontos;
+            snap.forEach(d => {
+                const data = d.data();
+                if(!totais[data.whatsapp]) totais[data.whatsapp] = { n: data.nome, p: 0 };
+                totais[data.whatsapp].p += data.pontos;
             });
-            const ordenado = Object.values(totais).sort((a, b) => b.pts - a.pts).slice(0, 5);
-            const lista = document.getElementById('lista-ranking');
-            lista.innerHTML = "";
-            ordenado.forEach(p => {
-                lista.innerHTML += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border-l-4 border-blue-900"><span class="font-bold text-slate-700 uppercase text-[10px]">${p.nome}</span><span class="bg-blue-900 text-white px-2 py-1 rounded text-[10px] font-black">${p.pts} PTS</span></div>`;
+            const lista = Object.values(totais).sort((a,b) => b.p - a.p).slice(0, 5);
+            const html = document.getElementById('lista-ranking');
+            html.innerHTML = "";
+            lista.forEach(i => {
+                html.innerHTML += `<div class="flex justify-between bg-blue-50 p-2 rounded-lg border-l-4 border-blue-900 text-[10px] font-bold"><span>${i.n.toUpperCase()}</span><span>${i.p} PTS</span></div>`;
             });
         }
     </script>
