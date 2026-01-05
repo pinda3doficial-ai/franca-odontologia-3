@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sexta Especial - França Odontologia</title>
+    <title>Sexta da Sorte - França Odontologia</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        #canvas-container { position: relative; width: 300px; height: 150px; margin: 20px auto; touch-action: none; }
+        canvas { border-radius: 15px; cursor: crosshair; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; }
+        .premio-bg { width: 100%; height: 100%; background: #f8fafc; border: 4px dashed #1e3a8a; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; color: #1e3a8a; z-index: 5; }
+    </style>
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center p-4">
 
     <div id="tela-login" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center mt-10 border-t-8 border-blue-900">
         <h1 class="text-3xl font-bold text-blue-900 mb-2">🦷 França Odontologia</h1>
-        <p class="text-slate-500 mb-6 font-medium">Sexta: Você conhece a França? ✨</p>
+        <p class="text-slate-500 mb-6 font-medium">Sexta: Raspadinha da Sorte! ✨</p>
         <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
         <input type="tel" id="whatsapp" placeholder="WhatsApp" class="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
-        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Entrar no Desafio</button>
+        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-800 transition">Quero Minha Raspadinha</button>
     </div>
 
-    <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md">
-        <div class="flex justify-between items-center mb-6">
-            <span class="text-blue-900 font-bold uppercase text-[10px]">Especial de Sexta</span>
-            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">Questão <span id="num-questao">1</span>/3</span>
+    <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md text-center">
+        <h2 class="text-xl font-bold text-blue-900 mb-2 text-center uppercase tracking-tighter">Sua Raspadinha Chegou!</h2>
+        <p class="text-xs text-slate-500 mb-4">Passe o dedo/mouse para revelar seus pontos.</p>
+
+        <div id="canvas-container">
+            <div class="premio-bg"><span id="valor-premio">?</span> PONTOS</div>
+            <canvas id="raspadinha"></canvas>
         </div>
 
-        <div id="pergunta-container">
-            <h2 id="texto-pergunta" class="text-lg font-bold text-slate-800 mb-6 text-center"></h2>
-            <div id="opcoes" class="grid grid-cols-1 gap-3"></div>
-        </div>
-
-        <div id="mensagem" class="hidden mt-8 border-t pt-4 text-center">
-            <p id="texto-final" class="font-bold text-lg mb-4 text-green-600"></p>
-            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
+        <div id="mensagem" class="hidden mt-4 pt-4 border-t">
+            <p class="text-green-600 font-bold text-lg mb-4">Parabéns! Você descobriu seus pontos.</p>
+            <button id="btn-salvar" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
         </div>
     </div>
 
     <div id="ranking-container" class="hidden mt-6 bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-900">
-        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 uppercase text-sm">🏆 Top Sorrisos França</h3>
+        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 uppercase text-xs">🏆 Top Sorrisos França</h3>
         <div id="lista-ranking" class="space-y-2"></div>
     </div>
 
@@ -55,31 +57,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const perguntas = [
-            { 
-                q: "Além de cuidar do seu sorriso, você sabia que a França Odontologia também realiza aplicação de BOTOX?", 
-                opts: ["Sim, agora eu sei!", "Não sabia!"],
-                c: 0,
-                msg: "Cuidamos da sua estética facial completa com Botox!"
-            },
-            { 
-                q: "Na França Odontologia você pode parcelar seu tratamento sem cartão através do nosso:", 
-                opts: ["Carnê Digital Próprio", "Apenas à vista"],
-                c: 0,
-                msg: "Nosso Carnê Digital facilita seu tratamento sem burocracia!"
-            },
-            { 
-                q: "Qual tecnologia de alinhadores invisíveis nossa ortodontista utiliza na clínica?", 
-                opts: ["Aparelho Comum", "Invisalign"],
-                c: 1,
-                msg: "O Invisalign é o alinhador mais moderno e discreto do mundo!"
-            }
-        ];
-
-        let qAtual = 0;
-        let pontos = 0;
         let nomePac = "";
         let zapPac = "";
+        let pontosSorteados = 20; // Valor fixo ou aleatório
 
         window.iniciar = function() {
             nomePac = document.getElementById('nome').value.trim();
@@ -90,58 +70,74 @@
             document.getElementById('tela-jogo').classList.remove('hidden');
             document.getElementById('ranking-container').classList.remove('hidden');
             
+            pontosSorteados = [10, 20, 30][Math.floor(Math.random() * 3)];
+            document.getElementById('valor-premio').innerText = pontosSorteados;
+            
+            initRaspadinha();
             atualizarRankingVisual();
-            renderizar();
         }
 
-        function renderizar() {
-            if(qAtual >= perguntas.length) return finalizar();
-            
-            document.getElementById('num-questao').innerText = qAtual + 1;
-            document.getElementById('texto-pergunta').innerText = perguntas[qAtual].q;
-            
-            const box = document.getElementById('opcoes');
-            box.innerHTML = "";
-            
-            perguntas[qAtual].opts.forEach((txt, i) => {
-                const b = document.createElement('button');
-                b.className = "w-full bg-slate-50 text-blue-900 p-4 rounded-xl font-bold border-2 border-slate-200 text-left hover:border-blue-900 transition";
-                b.innerText = txt;
-                b.onclick = () => checar(i);
-                box.appendChild(b);
-            });
-        }
+        function initRaspadinha() {
+            const canvas = document.getElementById('raspadinha');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 150;
 
-        async function checar(i) {
-            const correta = perguntas[qAtual].c;
-            if(i === correta) {
-                pontos += 10;
-                await Swal.fire({ icon: 'success', title: 'Correto!', text: perguntas[qAtual].msg, confirmButtonColor: '#1e3a8a' });
-            } else {
-                await Swal.fire({ icon: 'error', title: 'Quase lá...', text: "A resposta certa era: " + perguntas[qAtual].opts[correta] + ". " + perguntas[qAtual].msg, confirmButtonColor: '#1e3a8a' });
+            // Cor da cobertura (Cinza Prateado)
+            ctx.fillStyle = '#CBD5E1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Texto na cobertura
+            ctx.fillStyle = '#1e3a8a';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RASPE AQUI ✨', 150, 80);
+
+            let isDrawing = false;
+
+            function scratch(e) {
+                if (!isDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                checkScratch();
             }
-            qAtual++;
-            renderizar();
+
+            canvas.addEventListener('mousedown', () => isDrawing = true);
+            canvas.addEventListener('touchstart', () => isDrawing = true);
+            window.addEventListener('mouseup', () => isDrawing = false);
+            window.addEventListener('touchend', () => isDrawing = false);
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('touchmove', scratch);
         }
 
-        function finalizar() {
-            document.getElementById('pergunta-container').classList.add('hidden');
-            document.getElementById('mensagem').classList.remove('hidden');
-            document.getElementById('texto-final').innerText = `Você ganhou ${pontos} pontos!`;
-            document.getElementById('btn-acao').innerText = "SALVAR NO RANKING";
-            document.getElementById('btn-acao').onclick = () => salvar();
+        let raspado = false;
+        function checkScratch() {
+            if(raspado) return;
+            raspado = true;
+            setTimeout(() => {
+                document.getElementById('mensagem').classList.remove('hidden');
+                document.getElementById('btn-salvar').innerText = `SALVAR MEUS ${pontosSorteados} PONTOS`;
+                document.getElementById('btn-salvar').onclick = () => salvar();
+            }, 2000);
         }
 
         async function salvar() {
             const hoje = new Date().toLocaleDateString();
             const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
             const snap = await getDocs(q);
-            if(!snap.empty) { alert("Você já pontuou hoje!"); location.reload(); return; }
+            if(!snap.empty) { alert("Você já raspou hoje!"); location.reload(); return; }
 
             await addDoc(collection(db, "pontos"), {
-                nome: nomePac, whatsapp: zapPac, pontos: pontos, jogo: "Sexta-Quiz", data: new Date(), dataSimples: hoje
+                nome: nomePac, whatsapp: zapPac, pontos: pontosSorteados, jogo: "Sexta-Raspadinha", data: new Date(), dataSimples: hoje
             });
-            alert("Pontos salvos!");
+            alert("Sextou! Pontos salvos.");
             location.reload();
         }
 
