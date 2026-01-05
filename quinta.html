@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio França - Quinta da Memória</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card { height: 80px; cursor: pointer; perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; border-radius: 12px; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .card-front { background-color: #1e3a8a; color: white; }
+        .card-back { background-color: white; transform: rotateY(180deg); border: 2px solid #1e3a8a; }
+        .matched { visibility: hidden; }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen flex flex-col items-center p-4">
+
+    <div id="tela-login" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center mt-10 border-t-8 border-blue-900">
+        <h1 class="text-3xl font-bold text-blue-900 mb-2">🦷 França Odontologia</h1>
+        <p class="text-slate-500 mb-6 font-medium">Quinta: Jogo da Memória! 🧠</p>
+        <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 outline-none">
+        <input type="tel" id="whatsapp" placeholder="WhatsApp" class="w-full border-2 p-3 rounded-xl mb-6 outline-none">
+        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Começar Desafio</button>
+    </div>
+
+    <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md text-center">
+        <div class="flex justify-between items-center mb-6">
+            <span class="text-blue-900 font-bold uppercase text-xs">Ache os Pares</span>
+            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">Vale: 10 pts</span>
+        </div>
+
+        <div id="grid-memoria" class="grid grid-cols-4 gap-2 mb-6"></div>
+
+        <div id="mensagem" class="hidden border-t pt-4">
+            <p id="texto-final" class="font-bold text-lg mb-4 text-green-600">🏆 Parabéns!</p>
+            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
+        </div>
+    </div>
+
+    <div id="ranking-container" class="hidden mt-6 bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-900">
+        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 uppercase italic">🏆 Ranking Acumulado</h3>
+        <div id="lista-ranking" class="text-sm space-y-2"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+       const firebaseConfig = {
+  apiKey: "AIzaSyCzwQJ1k25R6eSmroZ7mtTbzbMYvJWyHNU",
+  authDomain: "franca-odontologia-3.firebaseapp.com",
+  projectId: "franca-odontologia-3",
+  storageBucket: "franca-odontologia-3.firebasestorage.app",
+  messagingSenderId: "838434930814",
+  appId: "1:838434930814:web:e2a5c59e68b29605a0d82f"
+};
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const icones = ['🦷', '🪥', '💎', '✨', '🦷', '🪥', '💎', '✨'];
+        let cartasViradas = [];
+        let paresEncontrados = 0;
+        let nomePac = "";
+        let zapPac = "";
+
+        window.iniciar = function() {
+            nomePac = document.getElementById('nome').value.trim();
+            zapPac = document.getElementById('whatsapp').value.trim();
+            if(!nomePac || !zapPac) return alert("Preencha tudo!");
+            document.getElementById('tela-login').classList.add('hidden');
+            document.getElementById('tela-jogo').classList.remove('hidden');
+            document.getElementById('ranking-container').classList.remove('hidden');
+            montarTabuleiro();
+            atualizarRankingVisual();
+        }
+
+        function montarTabuleiro() {
+            const grid = document.getElementById('grid-memoria');
+            const embaralhado = icones.sort(() => Math.random() - 0.5);
+            embaralhado.forEach((icone, index) => {
+                grid.innerHTML += `
+                    <div class="card" onclick="virarCarta(this, '${icone}')">
+                        <div class="card-inner">
+                            <div class="card-front text-white">?</div>
+                            <div class="card-back">${icone}</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.virarCarta = function(elemento, icone) {
+            if (cartasViradas.length < 2 && !elemento.classList.contains('flipped')) {
+                elemento.classList.add('flipped');
+                cartasViradas.push({elemento, icone});
+                if (cartasViradas.length === 2) {
+                    setTimeout(verificarPar, 700);
+                }
+            }
+        }
+
+        function verificarPar() {
+            const [c1, c2] = cartasViradas;
+            if (c1.icone === c2.icone) {
+                c1.elemento.classList.add('matched');
+                c2.elemento.classList.add('matched');
+                paresEncontrados++;
+                if (paresEncontrados === 4) finalizar();
+            } else {
+                c1.elemento.classList.remove('flipped');
+                c2.elemento.classList.remove('flipped');
+            }
+            cartasViradas = [];
+        }
+
+        function finalizar() {
+            document.getElementById('mensagem').classList.remove('hidden');
+            document.getElementById('btn-acao').innerText = "SALVAR MEUS 10 PONTOS";
+            document.getElementById('btn-acao').onclick = () => salvarNoFirebase(10);
+        }
+
+        async function salvarNoFirebase(pts) {
+            const btn = document.getElementById('btn-acao');
+            btn.disabled = true;
+            const hoje = new Date().toLocaleDateString();
+            const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
+            const snap = await getDocs(q);
+            if(!snap.empty) { alert("Você já jogou hoje!"); location.reload(); return; }
+            await addDoc(collection(db, "pontos"), {
+                nome: nomePac, whatsapp: zapPac, pontos: pts, jogo: "Quinta-Memoria", data: new Date(), dataSimples: hoje
+            });
+            alert("Pontos salvos!");
+            location.reload();
+        }
+
+        async function atualizarRankingVisual() {
+            const q = query(collection(db, "pontos"));
+            const querySnapshot = await getDocs(q);
+            const totais = {};
+            querySnapshot.forEach(doc => {
+                const d = doc.data();
+                if (!totais[d.whatsapp]) totais[d.whatsapp] = { nome: d.nome, pts: 0 };
+                totais[d.whatsapp].pts += d.pontos;
+            });
+            const ordenado = Object.values(totais).sort((a, b) => b.pts - a.pts).slice(0, 5);
+            const lista = document.getElementById('lista-ranking');
+            lista.innerHTML = "";
+            ordenado.forEach(p => {
+                lista.innerHTML += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border-l-4 border-blue-900"><span class="font-bold text-slate-700 uppercase text-[10px]">${p.nome}</span><span class="bg-blue-900 text-white px-2 py-1 rounded text-[10px] font-black">${p.pts} PTS</span></div>`;
+            });
+        }
+    </script>
+</body>
+</html>
