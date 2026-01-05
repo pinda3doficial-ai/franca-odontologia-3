@@ -9,14 +9,13 @@
         .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; user-select: none; transition: 0.2s; border-radius: 8px; font-size: 0.9rem; }
         .cell.selected { background-color: #1e3a8a; color: white; }
         .cell.found { background-color: #16a34a; color: white; cursor: default; }
-        .word-done { text-decoration: line-through; color: #94a3b8; }
     </style>
 </head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center p-4">
 
     <div id="tela-login" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center mt-10 border-t-8 border-blue-900">
         <h1 class="text-3xl font-bold text-blue-900 mb-2">🦷 França Odontologia</h1>
-        <p class="text-slate-500 mb-6 font-medium">Terça-Feira: Caça-Palavras!</p>
+        <p class="text-slate-500 mb-6 font-medium">Terça: Caça-Palavras!</p>
         <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 focus:border-blue-500 outline-none">
         <input type="tel" id="whatsapp" placeholder="WhatsApp (DDD + Número)" class="w-full border-2 p-3 rounded-xl mb-6 focus:border-blue-500 outline-none">
         <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Começar Desafio</button>
@@ -24,11 +23,11 @@
 
     <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md text-center">
         <div class="flex justify-between items-center mb-4">
-            <span class="text-blue-900 font-bold uppercase text-[10px] tracking-widest">Caça-Palavras</span>
+            <span class="text-blue-900 font-bold uppercase text-[10px] tracking-widest text-left">Terça-feira<br>França Odontologia</span>
             <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm">Vale: <span id="pontos-valendo">10</span> pts</span>
         </div>
 
-        <p class="text-xs text-slate-500 mb-4 font-bold">ENCONTRE: <span id="palavras-lista">FRANÇA, SORRISO, DENTE</span></p>
+        <p class="text-[10px] text-slate-500 mb-4 font-bold uppercase">Ache as palavras: <br><span class="text-blue-900 text-sm">FRANÇA • SORRISO • DENTE</span></p>
         
         <div id="grid" class="grid grid-cols-10 gap-1 bg-slate-100 p-2 rounded-xl mb-6 shadow-inner"></div>
 
@@ -37,14 +36,20 @@
             <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
         </div>
         
-        <button onclick="resetarJogo()" class="mt-4 text-xs text-slate-400 underline">Reiniciar Jogo (-1 ponto)</button>
+        <button onclick="resetarJogo()" class="mt-4 text-[10px] text-slate-400 underline uppercase tracking-tighter">Reiniciar e perder 1 ponto</button>
+    </div>
+
+    <div id="ranking-container" class="hidden mt-6 bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-900">
+        <h3 class="text-blue-900 font-black text-center border-b pb-2 mb-3 tracking-tighter">🏆 TOP SORRISOS FRANÇA</h3>
+        <div id="lista-ranking" class="text-sm space-y-2">
+            </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DO SEU FIREBASE (A mesma que você usou na segunda)
+        // COLOQUE AS MESMAS CHAVES AQUI
         const firebaseConfig = {
   apiKey: "AIzaSyCzwQJ1k25R6eSmroZ7mtTbzbMYvJWyHNU",
   authDomain: "franca-odontologia-3.firebaseapp.com",
@@ -53,7 +58,6 @@
   messagingSenderId: "838434930814",
   appId: "1:838434930814:web:e2a5c59e68b29605a0d82f"
 };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -63,19 +67,7 @@
         let nomePac = "";
         let zapPac = "";
 
-        // Letras do Grid (Pré-montado para terça)
-        const letrasGrid = [
-            'A','F','R','A','N','C','A','X','Z','P',
-            'S','O','R','R','I','S','O','W','Q','L',
-            'B','D','E','N','T','E','K','M','N','O',
-            'H','I','J','K','L','M','N','O','P','Q',
-            'R','S','T','U','V','W','X','Y','Z','A',
-            'C','A','S','D','F','G','H','J','K','L',
-            'M','N','O','P','Q','R','S','T','U','V',
-            'B','R','A','N','C','O','A','B','C','D',
-            'X','Y','Z','F','R','A','N','C','A','E',
-            'S','O','R','R','I','S','O','F','G','H'
-        ];
+        const letrasGrid = ['A','F','R','A','N','C','A','X','Z','P','S','O','R','R','I','S','O','W','Q','L','B','D','E','N','T','E','K','M','N','O','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','A','C','A','S','D','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','U','V','B','R','A','N','C','O','A','B','C','D','X','Y','Z','F','R','A','N','C','A','E','S','O','R','R','I','S','O','F','G','H'];
 
         window.iniciar = function() {
             nomePac = document.getElementById('nome').value.trim();
@@ -84,7 +76,9 @@
             
             document.getElementById('tela-login').classList.add('hidden');
             document.getElementById('tela-jogo').classList.remove('hidden');
+            document.getElementById('ranking-container').classList.remove('hidden');
             renderizarGrid();
+            atualizarRankingVisual();
         }
 
         function renderizarGrid() {
@@ -94,17 +88,13 @@
                 const d = document.createElement('div');
                 d.className = "cell bg-white text-blue-900 shadow-sm";
                 d.innerText = letra;
-                d.onclick = () => selecionar(d, letra);
+                d.onclick = () => selecionar(d);
                 gridDiv.appendChild(d);
             });
         }
 
-        let selecaoAtual = "";
-        let celulasSelecionadas = [];
-
-        function selecionar(div, letra) {
+        function selecionar(div) {
             if(div.classList.contains('found')) return;
-            
             div.classList.toggle('selected');
             
             const selecionadas = document.querySelectorAll('.cell.selected');
@@ -120,20 +110,14 @@
                     verificarVitoria();
                 }
             });
-            
-            // Limpa se a palavra ficar maior que as do jogo (evita travar)
-            if(palavraFormada.length > 7) {
-                document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
-            }
         }
 
         function verificarVitoria() {
             if(encontradas.length === palavrasParaAchar.length) {
                 const pontos = Math.max(0, 10 - penalidade);
-                const msg = document.getElementById('mensagem');
-                msg.classList.remove('hidden');
-                document.getElementById('texto-final').innerText = `🏆 Você achou tudo e ganhou ${pontos} pontos!`;
-                document.getElementById('btn-acao').innerText = "SALVAR MEUS PONTOS";
+                document.getElementById('mensagem').classList.remove('hidden');
+                document.getElementById('texto-final').innerText = `🏆 Você ganhou ${pontos} pontos!`;
+                document.getElementById('btn-acao').innerText = "REGISTRAR PONTOS";
                 document.getElementById('btn-acao').onclick = () => salvarTerca(pontos);
             }
         }
@@ -141,14 +125,13 @@
         async function salvarTerca(pontos) {
             const btn = document.getElementById('btn-acao');
             btn.disabled = true;
-            btn.innerText = "VERIFICANDO...";
-            
             const hoje = new Date().toLocaleDateString();
+            
             const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
             const snap = await getDocs(q);
 
             if(!snap.empty) {
-                alert("Você já pontuou hoje! Até amanhã! 😉");
+                alert("Você já pontuou hoje!");
                 location.reload();
                 return;
             }
@@ -157,8 +140,23 @@
                 nome: nomePac, whatsapp: zapPac, pontos: pontos, jogo: "Terca-CacaPalavras", data: new Date(), dataSimples: hoje
             });
 
-            alert("Pontos salvos na França Odontologia!");
+            alert("Pontos salvos!");
             location.reload();
+        }
+
+        async function atualizarRankingVisual() {
+            const q = query(collection(db, "pontos"), orderBy("pontos", "desc"), limit(5));
+            const querySnapshot = await getDocs(q);
+            const lista = document.getElementById('lista-ranking');
+            lista.innerHTML = "";
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                lista.innerHTML += `
+                    <div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border-l-4 border-blue-900">
+                        <span class="font-bold text-slate-700 uppercase text-[10px]">${d.nome}</span>
+                        <span class="bg-blue-900 text-white px-2 py-1 rounded text-[10px] font-black">${d.pontos} PTS</span>
+                    </div>`;
+            });
         }
 
         window.resetarJogo = function() {
