@@ -3,62 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quarta-feira: Mito ou Verdade | França Odontologia</title>
-    
+    <title>Desafio França - Quarta do Conhecimento</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-        body { font-family: 'Poppins', sans-serif; background: #2563eb; }
-    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="bg-blue-50 min-h-screen flex flex-col items-center p-4">
 
-    <div id="auth-container" class="hidden bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 text-center">
-        <h1 class="text-2xl font-800 text-blue-900 mb-6">IDENTIFIQUE-SE 🦷</h1>
-        <p class="text-gray-600 mb-8">Para entrar no Ranking da França Odontologia, faça login com o Google.</p>
-        <button onclick="fazerLogin()" class="bg-white border-2 border-gray-200 text-gray-700 w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-gray-50 transition-all">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
-            Entrar com Google
-        </button>
+    <div id="tela-login" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center mt-10 border-t-8 border-blue-900">
+        <h1 class="text-3xl font-bold text-blue-900 mb-2">🦷 França Odontologia</h1>
+        <p class="text-slate-500 mb-6 font-medium">Quarta: Verdade ou Mito? 💡</p>
+        <input type="text" id="nome" placeholder="Seu Nome Completo" class="w-full border-2 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
+        <input type="tel" id="whatsapp" placeholder="WhatsApp (DDD + Número)" class="w-full border-2 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
+        <button onclick="iniciar()" class="bg-blue-900 text-white w-full py-4 rounded-xl font-bold text-lg shadow-lg">Começar Desafio</button>
     </div>
 
-    <div id="game-wrapper" class="hidden bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
-        <div class="bg-blue-50 p-6 text-center border-b border-blue-100">
-            <h1 class="text-blue-900 font-bold text-xl uppercase">Desafio França</h1>
-            <p class="text-blue-500 text-sm">Quarta-feira: Mito ou Verdade</p>
+    <div id="tela-jogo" class="hidden bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <span id="timer" class="text-2xl font-black text-blue-900">15s</span>
+            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">Questão <span id="num-questao">1</span>/3</span>
         </div>
 
-        <div id="game-container" class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <span class="text-xs font-bold text-blue-400 uppercase">Questão <span id="num-atual">1</span>/5</span>
-                <span class="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Pontos: <span id="pontos-view">0</span></span>
+        <div id="pergunta-container" class="text-center">
+            <h2 id="texto-pergunta" class="text-xl font-bold text-slate-800 mb-8 leading-tight"></h2>
+            <div id="opcoes" class="grid grid-cols-1 gap-4">
+                <button onclick="responder(true)" class="bg-blue-100 text-blue-900 py-4 rounded-2xl font-bold text-lg hover:bg-blue-200 border-2 border-blue-200">VERDADE</button>
+                <button onclick="responder(false)" class="bg-red-50 text-red-900 py-4 rounded-2xl font-bold text-lg hover:bg-red-100 border-2 border-red-100">MITO</button>
             </div>
-            <h2 id="pergunta" class="text-gray-800 text-lg font-bold leading-tight mb-8 min-h-[80px]">Carregando...</h2>
-            <div id="botoes-acao" class="grid grid-cols-2 gap-4">
-                <button onclick="responder(false)" class="bg-red-100 text-red-700 font-bold py-5 rounded-2xl border-b-4 border-red-300">MITO</button>
-                <button onclick="responder(true)" class="bg-green-100 text-green-700 font-bold py-5 rounded-2xl border-b-4 border-green-300">VERDADE</button>
-            </div>
-            <div id="feedback" class="hidden mt-6"></div>
         </div>
 
-        <div id="tela-final" class="hidden p-8 text-center">
-            <h2 class="text-2xl font-bold text-blue-900 mb-2">Excelente! 🎉</h2>
-            <div class="bg-blue-50 rounded-2xl p-6 mb-6">
-                <p id="nome-paciente" class="text-blue-800 font-bold mb-2"></p>
-                <p class="text-[10px] text-blue-500 uppercase font-bold">Pontos de Hoje</p>
-                <p id="pontos-final" class="text-5xl font-black text-blue-900">0</p>
+        <div id="feedback-container" class="hidden mt-6 text-center animate-fade-in">
+            <div id="alerta-feedback" class="p-4 rounded-2xl mb-4 text-left border-l-4">
+                <p id="feedback-titulo" class="font-black text-lg"></p>
+                <p id="feedback-texto" class="text-sm mt-1"></p>
             </div>
-            <button onclick="window.location.reload()" class="bg-blue-600 text-white w-full py-4 rounded-2xl font-bold">Reiniciar</button>
+            <button onclick="proximaPergunta()" class="bg-blue-900 text-white px-6 py-4 rounded-xl font-bold w-full shadow-md uppercase tracking-wider">Entendi!</button>
+        </div>
+
+        <div id="mensagem" class="hidden mt-8 border-t pt-4 text-center">
+            <p id="texto-final" class="font-bold text-lg mb-4 text-green-600"></p>
+            <button id="btn-acao" class="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold w-full shadow-md"></button>
         </div>
     </div>
 
-    <script>
-        // CONFIGURAÇÃO DO SEU FIREBASE (COLE SEUS DADOS AQUI)
-         const firebaseConfig = {
+    <div id="ranking-container" class="hidden mt-6 bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border-b-8 border-blue-900 text-center">
+        <h3 class="text-blue-900 font-black border-b pb-2 mb-3 tracking-tighter uppercase">🏆 Top Sorrisos França</h3>
+        <div id="lista-ranking" class="text-sm space-y-2 text-left"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
   apiKey: "AIzaSyCzwQJ1k25R6eSmroZ7mtTbzbMYvJWyHNU",
   authDomain: "franca-odontologia-3.firebaseapp.com",
   projectId: "franca-odontologia-3",
@@ -66,90 +61,156 @@
   messagingSenderId: "838434930814",
   appId: "1:838434930814:web:e2a5c59e68b29605a0d82f"
 };
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
 
-        let qAtual = 0;
-        let pontosGanhos = 0;
-        let usuarioLogado = null;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
+        // Perguntas com Explicação (Dica de Ouro)
         const perguntas = [
-            { q: "O clareamento dental remove o esmalte e deixa os dentes finos?", a: false, e: "Mito! O gel apenas remove pigmentos, o esmalte continua forte." },
-            { q: "O uso do fio dental é tão importante quanto a escovação?", a: true, e: "Verdade! Só o fio limpa onde a escova não chega." },
-            { q: "É normal a gengiva sangrar um pouco na escovação?", a: false, e: "Mito! Gengiva saudável não sangra. Procure o dentista!" },
-            { q: "Doces não são os únicos culpados pelas cáries?", a: true, e: "Verdade! Pães e massas também alimentam as bactérias da cárie." },
-            { q: "Quem usa aparelho tem mais facilidade de ter cáries?", a: true, e: "Verdade! O aparelho retém mais resíduos, por isso a higiene deve ser dobrada." }
+            { 
+                q: "Clareamento dental estraga o esmalte dos dentes?", 
+                a: false, 
+                e: "O gel apenas remove pigmentos internos. Com supervisão do dentista, seu esmalte continua 100% íntegro!" 
+            },
+            { 
+                q: "Devemos passar fio dental antes da escovação?", 
+                a: true, 
+                e: "Verdade! Ao passar o fio antes, você desorganiza a placa entre os dentes, e a escova remove tudo depois." 
+            },
+            { 
+                q: "Quem usa implante também precisa de limpeza profissional?", 
+                a: true, 
+                e: "Verdade! O implante não tem cárie, mas pode ter inflamações na gengiva e osso. A limpeza é essencial!" 
+            }
         ];
 
-        // Lógica de Autenticação
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                usuarioLogado = user;
-                document.getElementById('auth-container').classList.add('hidden');
-                document.getElementById('game-wrapper').classList.remove('hidden');
-                carregarQuestao();
+        let questaoAtual = 0;
+        let acertos = 0;
+        let tempo = 15;
+        let cronometro;
+        let nomePac = "";
+        let zapPac = "";
+
+        window.iniciar = function() {
+            nomePac = document.getElementById('nome').value.trim();
+            zapPac = document.getElementById('whatsapp').value.trim();
+            if(!nomePac || !zapPac) return alert("Preencha tudo!");
+            document.getElementById('tela-login').classList.add('hidden');
+            document.getElementById('tela-jogo').classList.remove('hidden');
+            document.getElementById('ranking-container').classList.remove('hidden');
+            carregarPergunta();
+            atualizarRankingVisual();
+        }
+
+        function carregarPergunta() {
+            if(questaoAtual >= perguntas.length) return finalizar();
+            
+            // Reset de tela
+            document.getElementById('opcoes').classList.remove('hidden');
+            document.getElementById('feedback-container').classList.add('hidden');
+            document.getElementById('timer').classList.remove('hidden');
+
+            document.getElementById('num-questao').innerText = questaoAtual + 1;
+            document.getElementById('texto-pergunta').innerText = perguntas[questaoAtual].q;
+            tempo = 15;
+            iniciarCronometro();
+        }
+
+        function iniciarCronometro() {
+            clearInterval(cronometro);
+            document.getElementById('timer').innerText = tempo + "s";
+            cronometro = setInterval(() => {
+                tempo--;
+                document.getElementById('timer').innerText = tempo + "s";
+                if(tempo <= 0) {
+                    clearInterval(cronometro);
+                    responder(null); 
+                }
+            }, 1000);
+        }
+
+        window.responder = function(resposta) {
+            clearInterval(cronometro);
+            const correta = perguntas[questaoAtual].a;
+            const explicacao = perguntas[questaoAtual].e;
+            const acertou = (resposta === correta);
+
+            if(acertou) acertos++;
+
+            // Mostrar Feedback Educativo
+            document.getElementById('opcoes').classList.add('hidden');
+            document.getElementById('timer').classList.add('hidden');
+            const feedbackContainer = document.getElementById('feedback-container');
+            const alerta = document.getElementById('alerta-feedback');
+            const titulo = document.getElementById('feedback-titulo');
+            const texto = document.getElementById('feedback-texto');
+
+            feedbackContainer.classList.remove('hidden');
+            texto.innerText = explicacao;
+
+            if(acertou) {
+                titulo.innerText = "✅ VOCÊ ACERTOU!";
+                alerta.className = "p-4 rounded-2xl mb-4 text-left border-l-4 bg-green-50 border-green-500 text-green-700";
             } else {
-                document.getElementById('auth-container').classList.remove('hidden');
-                document.getElementById('game-wrapper').classList.add('hidden');
+                titulo.innerText = "❌ NA VERDADE...";
+                alerta.className = "p-4 rounded-2xl mb-4 text-left border-l-4 bg-red-50 border-red-500 text-red-700";
             }
-        });
-
-        function fazerLogin() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
         }
 
-        function carregarQuestao() {
-            const questao = perguntas[qAtual];
-            document.getElementById('num-atual').innerText = qAtual + 1;
-            document.getElementById('pergunta').innerText = questao.q;
-            document.getElementById('feedback').classList.add('hidden');
-            document.getElementById('botoes-acao').classList.remove('hidden');
+        window.proximaPergunta = function() {
+            questaoAtual++;
+            carregarPergunta();
         }
 
-        function responder(escolha) {
-            const questao = perguntas[qAtual];
-            const acertou = escolha === questao.a;
-            document.getElementById('botoes-acao').classList.add('hidden');
-            const feedbackDiv = document.getElementById('feedback');
-            feedbackDiv.classList.remove('hidden');
+        function finalizar() {
+            const pontos = acertos * 3; 
+            document.getElementById('pergunta-container').classList.add('hidden');
+            document.getElementById('timer').classList.add('hidden');
+            document.getElementById('feedback-container').classList.add('hidden');
+            
+            const msg = document.getElementById('mensagem');
+            msg.classList.remove('hidden');
+            document.getElementById('texto-final').innerText = `🎉 Você acertou ${acertos} de 3 e ganhou ${pontos} pontos!`;
+            document.getElementById('btn-acao').innerText = "SALVAR MEUS PONTOS";
+            document.getElementById('btn-acao').onclick = () => salvarNoFirebase(pontos);
+        }
 
-            if (acertou) {
-                pontosGanhos += 10;
-                document.getElementById('pontos-view').innerText = pontosGanhos;
-                feedbackDiv.innerHTML = `<div class="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
-                    <p class="text-green-700 font-bold">✅ Acertou!</p><p class="text-green-600 text-sm">${questao.e}</p>
-                </div>`;
-            } else {
-                feedbackDiv.innerHTML = `<div class="bg-red-50 p-4 rounded-2xl border-2 border-red-200">
-                    <p class="text-red-700 font-bold">❌ Na verdade...</p><p class="text-red-600 text-sm">${questao.e}</p>
-                </div>`;
+        async function salvarNoFirebase(pts) {
+            const btn = document.getElementById('btn-acao');
+            btn.disabled = true;
+            btn.innerText = "SALVANDO...";
+            const hoje = new Date().toLocaleDateString();
+            
+            try {
+                const q = query(collection(db, "pontos"), where("whatsapp", "==", zapPac), where("dataSimples", "==", hoje));
+                const snap = await getDocs(q);
+                if(!snap.empty) { alert("Você já jogou hoje!"); location.reload(); return; }
+
+                await addDoc(collection(db, "pontos"), {
+                    nome: nomePac, whatsapp: zapPac, pontos: pts, jogo: "Quarta-Quiz", data: new Date(), dataSimples: hoje
+                });
+                alert("Pontos salvos com sucesso!");
+                location.reload();
+            } catch (e) {
+                console.error("Erro ao salvar: ", e);
+                alert("Erro ao salvar pontos.");
+                btn.disabled = false;
             }
-
-            const btn = document.createElement('button');
-            btn.innerText = (qAtual < perguntas.length - 1) ? "Próxima" : "Ver Resultado";
-            btn.className = "w-full bg-blue-600 text-white py-4 rounded-2xl font-bold mt-4";
-            btn.onclick = () => {
-                qAtual++;
-                if (qAtual < perguntas.length) carregarQuestao();
-                else finalizarESalvar();
-            };
-            feedbackDiv.appendChild(btn);
         }
 
-        function finalizarESalvar() {
-            const refRanking = db.ref('ranking/' + usuarioLogado.uid);
-            refRanking.transaction((dados) => {
-                if (!dados) return { nome: usuarioLogado.displayName, pontos: pontosGanhos, foto: usuarioLogado.photoURL };
-                return { ...dados, pontos: (dados.pontos || 0) + pontosGanhos };
-            }).then(() => {
-                document.getElementById('game-container').classList.add('hidden');
-                document.getElementById('tela-final').classList.remove('hidden');
-                document.getElementById('pontos-final').innerText = pontosGanhos;
-                document.getElementById('nome-paciente').innerText = "Parabéns, " + usuarioLogado.displayName.split(' ')[0] + "!";
-            });
+        async function atualizarRankingVisual() {
+            try {
+                const q = query(collection(db, "pontos"), orderBy("pontos", "desc"), limit(5));
+                const querySnapshot = await getDocs(q);
+                const lista = document.getElementById('lista-ranking');
+                lista.innerHTML = "";
+                querySnapshot.forEach((doc) => {
+                    const d = doc.data();
+                    lista.innerHTML += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border-l-4 border-blue-900"><span class="font-bold text-slate-700 uppercase text-[10px]">${d.nome}</span><span class="bg-blue-900 text-white px-2 py-1 rounded text-[10px] font-black">${d.pontos} PTS</span></div>`;
+                });
+            } catch (e) {
+                console.error("Erro no ranking: ", e);
+            }
         }
     </script>
 </body>
